@@ -1,0 +1,19 @@
+[package]
+authors = ["Joshua Coles <josh@coles.to>"]
+edition = "2018"
+name = "fig-compiler"
+version = "0.1.0"
+
+[dependencies]
+serde = "1.0"
+serde_derive = "1.0"
+serde_json = "1.0"
+
+uuid = { version = "0.7", features = ["v4"] }
+
+rocket = "0.4.0"
+
+[dependencies.rocket_contrib]
+version = "0.4.0"
+default-features = false
+features = ["json", "uuid"]
