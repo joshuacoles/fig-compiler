@@ -23,6 +23,12 @@ use rocket_contrib::uuid::Uuid;
 
 use self::figure::Figure;
 
+use rocket::fairing::AdHoc;
+use std::path::Path;
+use rocket::State;
+
+struct BaseURI(String);
+
 fn render(id: Uuid) -> Option<NamedFile> {
     let figure = store::load_fig(&id)?;
     let path = figure.compile();
@@ -45,14 +51,14 @@ fn editor(id: Uuid) -> &'static str {
 }
 
 #[get("/", format = "text/html")]
-fn create() -> Redirect {
+fn create(base_uri: State<BaseURI>) -> Redirect {
     let uuid: uuid::Uuid = uuid::Uuid::new_v4();
 
     store::store_fig(&uuid, &Figure::default());
 
     let uuid: String = uuid.to_hyphenated().to_string();
 
-    Redirect::to(format!("/{}", uuid))
+    Redirect::to(format!("{}/{}", base_uri.0, uuid))
 }
 
 #[post("/<id>", format = "application/json", data = "<figure>")]
@@ -65,11 +71,16 @@ fn main() {
     let base_uri = std::env::vars().find(|(k, _)| k == "APP_ROOT")
         .map_or("/".to_string(), |(_, v)| v);
 
-    rocket::ignite().mount(base_uri.as_str(), routes![
-        create,
-        display,
-        display_redirect,
-        editor,
-        update
-    ]).launch();
+    rocket::ignite()
+        .mount(base_uri.as_str(), routes![
+            create,
+            display,
+            display_redirect,
+            editor,
+            update,
+        ])
+        .attach(AdHoc::on_attach("Base URI", |rocket| {
+            Ok(rocket.manage(BaseURI(base_uri)))
+        }))
+        .launch();
 }
