@@ -2,6 +2,7 @@
 **/*.rs.bk
 
 test.sh
+push.sh
 store/
 
 # IntelliJ
